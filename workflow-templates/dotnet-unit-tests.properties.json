@@ -1,0 +1,11 @@
+{
+    "name": "Unit Tests",
+    "description": "Run unit tests for a .NET project",
+    "iconName": "test",
+    "categories": [
+        "Continuous Integration",
+        "testing",
+        "dotnet",
+        "unit tests"
+    ]
+}

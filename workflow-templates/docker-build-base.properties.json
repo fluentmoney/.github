@@ -1,0 +1,14 @@
+{
+    "name": "Docker Build & Push to ACR",
+    "description": "Docker Build & Push to Azure Container Registry (ACR) workflow template",
+    "iconName": "container",
+    "categories": [
+        "Continuous Integration",
+        "deployment",
+        "docker",
+        "azure"
+    ],
+    "filePatterns": [
+        "Dockerfile$"
+    ]
+}
