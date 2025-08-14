@@ -1,7 +1,7 @@
 {
     "name": "Docker Build & Push to ACR",
     "description": "Docker Build & Push to Azure Container Registry (ACR) workflow template",
-    "iconName": "container",
+    "iconName": "fluen-money-logo",
     "categories": [
         "Continuous Integration",
         "deployment",

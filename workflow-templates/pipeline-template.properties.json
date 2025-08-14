@@ -1,0 +1,11 @@
+{
+    "name": "Pipeline Template",
+    "description": "A template for creating a pipeline workflow",
+    "iconName": "fluen-money-logo",
+    "categories": [
+        "Continuous Integration",
+        "deployment",
+        "pipeline",
+        "template"
+    ]
+}
