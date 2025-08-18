@@ -1,0 +1,128 @@
+## Name of the workflow
+name: Docker Build & Push to ACR
+
+
+## The variables needed to run the workflow
+on:
+  workflow_call:
+    inputs:
+      ## Name of the container/image
+      container:
+        required: true
+        type: string
+      ## Path to the Docker build context
+      buildcontextpath:
+        required: true
+        type: string
+      ## Path to the .NET project file
+      projectfilepath:
+        required: true
+        type: string
+      ## Path to the Dockerfile
+      dockerfilepath:
+        required: true
+        type: string
+      ## Whether to fail on test failures
+      stricttestfailures:
+        required: false
+        type: boolean
+        default: false
+      ## .NET SDK version to use
+      dotnetcoreversion:
+        required: false
+        type: string
+        default: '7.0.x'
+      ## Container registry service connection
+      containerregistry:
+        required: false
+        type: string
+        default: 'service-connection-fluent-acr'
+      ## Force Docker build regardless of branch
+      forcedockerbuild:
+        required: false
+        type: boolean
+        default: false
+      ## Optional config connection string
+      fmgConfigConnectionString:
+        required: false
+        type: string
+
+
+## Jobs the workflow runs
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    ## Only run tests if not forcing docker build, or if on master branch
+    if: ${{ !inputs.forcedockerbuild && github.ref == 'refs/heads/master' || inputs.forcedockerbuild }}
+    steps:
+      ## Step 1: Checkout the repository code
+      - uses: actions/checkout@v4
+
+      ## Step 2: Run .NET unit tests using the reusable workflow
+      - name: Run Unit Tests
+        uses: ./.github/workflows/templates/dotnet-unit-tests.yml
+        with:
+          dotnetcoreversion: ${{ inputs.dotnetcoreversion }}
+          projectfilepath: ${{ inputs.projectfilepath }}
+          stricttestfailures: ${{ inputs.stricttestfailures }}
+          fmgConfigConnectionString: ${{ inputs.fmgConfigConnectionString }}
+
+  build:
+    runs-on: ubuntu-latest
+    needs: tests
+    ## Only build if forced or tests succeeded and on master branch
+    if: ${{ inputs.forcedockerbuild || (success() && github.ref == 'refs/heads/master') }}
+    steps:
+      ## Step 1: Checkout the repository code (with credentials)
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      ## Step 2: Build the Docker image
+      - name: Docker Build
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ inputs.buildcontextpath }}
+          file: ${{ inputs.dockerfilepath }}
+          push: false
+          tags: |
+            ${{ github.run_number }}
+            latest
+          build-args: |
+            FEED_ACCESSTOKEN=${{ secrets.GITHUB_TOKEN }}
+
+      ## Step 3: Push the Docker image to the registry
+      - name: Docker Push
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ inputs.buildcontextpath }}
+          file: ${{ inputs.dockerfilepath }}
+          push: true
+          tags: |
+            ${{ github.run_number }}
+            latest
+
+      ## Step 4: Tag the git commit for traceability
+      - name: Git Tag
+        run: |
+          git tag builds/${{ github.workflow }}/${{ github.run_number }}
+          git push origin builds/${{ github.workflow }}/${{ github.run_number }}
+        working-directory: ${{ github.workspace }}
+
+  push_git_tag:
+    runs-on: ubuntu-latest
+    needs: [tests, build]
+    ## Only run if everything succeeded and on master branch
+    if: ${{ success() && github.ref == 'refs/heads/master' }}
+    steps:
+      ## Step 1: Set a KeyVault secret with the build number for release tracking
+      - name: Set KeyVault Secret
+        uses: azure/CLI@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            echo "Container: ${{ inputs.container }}"
+            echo "Build.BuildNumber: ${{ github.run_number }}"
+            echo "Build.SourceBranch: ${{ github.ref }}"
+            echo "Build.DefinitionName: ${{ github.workflow }}"
+            az keyvault secret set --vault-name ReleaseVault --name "${{ inputs.container }}" --value ${{ github.run_number }}

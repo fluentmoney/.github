@@ -1,0 +1,63 @@
+## Name of the workflow
+name: Unit Tests
+
+## Description of what the workflow does
+description: 'Reusable workflow for running .NET unit tests'
+
+
+## The variables needed to run this workflow
+on:
+  workflow_call:
+    inputs:
+      ## .NET SDK version to use
+      dotnetcoreversion:
+        required: true
+        type: string
+      ## Path to the project file  
+      projectfilepath:     
+        required: true
+        type: string
+      ## Bolean to fail on test failures  
+      stricttestfailures:  
+        required: false
+        type: boolean
+        default: false
+      ## fmgconfig connection string  
+      fmgConfigConnectionString:  
+        required: false
+        type: string
+
+
+## Jobs the workflow runs
+jobs:
+  unit_tests:
+    ## What OS to run the job on
+    runs-on: ubuntu-latest  
+    steps:
+      ## Step 1: Checkout the repository code
+      - uses: actions/checkout@v4
+
+      ## Step 2: Setup the required .NET version
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ inputs.dotnetcoreversion }}
+
+      ## Step 3: Authenticate with NuGet
+      - name: NuGet Authenticate
+        uses: nuget/setup-nuget@v2
+
+      ## Step 4: Find the path to run tests from using a custom script
+      - name: Find path to run tests from
+        id: find_test_path
+        run: |
+          chmod +x ./Pipelines/find-test-path
+          echo "testpath=$(./Pipelines/find-test-path ./${{ inputs.projectfilepath }})" >> $GITHUB_OUTPUT
+
+      ## Step 5: Run the unit tests with code coverage and output results
+      - name: Run Unit Tests
+        env:
+          FMG_CONFIG_CONNECTION_STRING: ${{ inputs.fmgConfigConnectionString }}
+        run: |
+          dotnet test "${{ steps.find_test_path.outputs.testpath }}" --logger:trx --collect:"XPlat Code Coverage" --results-directory:"TestResults"
+        continue-on-error: ${{ !inputs.stricttestfailures }}
