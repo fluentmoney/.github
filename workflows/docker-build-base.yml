@@ -53,7 +53,6 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     ## Only run tests if not forcing docker build, or if on master branch
-    if: ${{ !inputs.forcedockerbuild && github.ref == 'refs/heads/master' || inputs.forcedockerbuild }}
     steps:
       ## Step 1: Checkout the repository code
       - uses: actions/checkout@v4
