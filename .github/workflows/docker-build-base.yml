@@ -64,8 +64,8 @@ jobs:
       stricttestfailures: ${{ inputs.stricttestfailures }}
       fmgConfigConnectionString: ${{ inputs.fmgConfigConnectionString }}
     secrets:
-      nuget_source_url: ${{ secrets.nugetsourceurl }}
-      nuget_auth_token: ${{ secrets.nugetauthtoken }}
+      nugetsourceurl: ${{ secrets.nugetsourceurl }}
+      nugetauthtoken: ${{ secrets.nugetauthtoken }}
 
   build:
     runs-on: ubuntu-latest
