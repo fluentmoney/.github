@@ -50,7 +50,7 @@ jobs:
       - name: Authenticate with NuGet
         uses: actions/setup-dotnet@v3
         with:
-          source-url: ${{ secrets.nugetsourceurl }}
+          source-url: https://pkgs.dev.azure.com/FluentMoneyGroup/fmg-myfluent/_packaging/fluent/nuget/v3/index.json
         env:
           NUGET_AUTH_TOKEN: ${{ secrets.nugetauthtoken }}
 

@@ -47,9 +47,6 @@ on:
         required: false
         type: string
     secrets:
-      ## NuGet source URL
-      nugetsourceurl:
-        required: true
       ## NuGet authentication token
       nugetauthtoken:
         required: true
@@ -64,7 +61,6 @@ jobs:
       stricttestfailures: ${{ inputs.stricttestfailures }}
       fmgConfigConnectionString: ${{ inputs.fmgConfigConnectionString }}
     secrets:
-      nugetsourceurl: ${{ secrets.nugetsourceurl }}
       nugetauthtoken: ${{ secrets.nugetauthtoken }}
 
   build:
