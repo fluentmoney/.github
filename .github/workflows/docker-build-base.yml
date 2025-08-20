@@ -55,11 +55,12 @@ jobs:
     ## Only run tests if not forcing docker build, or if on master branch
     steps:
       ## Step 1: Checkout the repository code
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       ## Step 2: Run .NET unit tests using the reusable workflow
       - name: Run Unit Tests
-        uses: ./.github/workflows/templates/dotnet-unit-tests.yml
+        uses: ./.github/workflows/dotnet-unit-tests.yml@main
         with:
           dotnetcoreversion: ${{ inputs.dotnetcoreversion }}
           projectfilepath: ${{ inputs.projectfilepath }}

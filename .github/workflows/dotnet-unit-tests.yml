@@ -1,10 +1,6 @@
 ## Name of the workflow
 name: Unit Tests
 
-## Description of what the workflow does
-description: 'Reusable workflow for running .NET unit tests'
-
-
 ## The variables needed to run this workflow
 on:
   workflow_call:
@@ -35,7 +31,8 @@ jobs:
     runs-on: ubuntu-latest  
     steps:
       ## Step 1: Checkout the repository code
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       ## Step 2: Setup the required .NET version
       - name: Setup .NET Core SDK
