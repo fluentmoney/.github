@@ -18,13 +18,12 @@ on:
         required: false
         type: boolean
         default: false
-      ## fmgconfig connection string  
-      fmgConfigConnectionString:  
-        required: false
-        type: string
     secrets:
       ## NuGet authentication token
       nugetauthtoken:
+        required: true
+      ## fmgConfig connection string
+      fmgConfigConnectionString:
         required: true
 
 ## Jobs the workflow runs
@@ -61,7 +60,7 @@ jobs:
       ## Step 5: Run the unit tests with code coverage and output results
       - name: Run Unit Tests
         env:
-          FMG_CONFIG_CONNECTION_STRING: ${{ inputs.fmgConfigConnectionString }}
+          FMG_CONFIG_CONNECTION_STRING: ${{ secrets.fmgConfigConnectionString }}
         run: |
           dotnet test "${{ steps.find_test_path.outputs.testpath }}" --logger:trx --collect:"XPlat Code Coverage" --results-directory:"TestResults"
         continue-on-error: ${{ !inputs.stricttestfailures }}

@@ -42,14 +42,13 @@ on:
         required: false
         type: boolean
         default: false
-      ## Optional config connection string
-      fmgConfigConnectionString:
-        required: false
-        type: string
     secrets:
       ## NuGet authentication token
       nugetauthtoken:
         required: true
+      ## fmgConfig connection string
+      fmgConfigConnectionString:
+        required: false
 
 jobs:
   ## Jobs the workflow runs
@@ -62,6 +61,7 @@ jobs:
       fmgConfigConnectionString: ${{ inputs.fmgConfigConnectionString }}
     secrets:
       nugetauthtoken: ${{ secrets.nugetauthtoken }}
+      fmgConfigConnectionString: ${{ secrets.fmgConfigConnectionString }}
 
   build:
     runs-on: ubuntu-latest
