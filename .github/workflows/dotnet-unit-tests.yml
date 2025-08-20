@@ -23,9 +23,6 @@ on:
         required: false
         type: string
     secrets:
-      ## NuGet source URL
-      nugetsourceurl:
-        required: true
       ## NuGet authentication token
       nugetauthtoken:
         required: true
