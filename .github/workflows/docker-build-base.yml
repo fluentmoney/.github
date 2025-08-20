@@ -60,7 +60,7 @@ jobs:
 
       ## Step 2: Run .NET unit tests using the reusable workflow
       - name: Run Unit Tests
-        uses: ./.github/workflows/dotnet-unit-tests.yml@main
+        uses: ./.github/workflows/dotnet-unit-tests.yml
         with:
           dotnetcoreversion: ${{ inputs.dotnetcoreversion }}
           projectfilepath: ${{ inputs.projectfilepath }}
