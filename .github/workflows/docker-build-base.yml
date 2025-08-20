@@ -58,7 +58,6 @@ jobs:
       dotnetcoreversion: ${{ inputs.dotnetcoreversion }}
       projectfilepath: ${{ inputs.projectfilepath }}
       stricttestfailures: ${{ inputs.stricttestfailures }}
-      fmgConfigConnectionString: ${{ inputs.fmgConfigConnectionString }}
     secrets:
       nugetauthtoken: ${{ secrets.nugetauthtoken }}
       fmgConfigConnectionString: ${{ secrets.fmgConfigConnectionString }}
