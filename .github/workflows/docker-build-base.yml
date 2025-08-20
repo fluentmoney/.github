@@ -46,6 +46,13 @@ on:
       fmgConfigConnectionString:
         required: false
         type: string
+    secrets:
+      ## NuGet source URL
+      nugetsourceurl:
+        required: true
+      ## NuGet authentication token
+      nugetauthtoken:
+        required: true
 
 jobs:
   ## Jobs the workflow runs
@@ -56,6 +63,9 @@ jobs:
       projectfilepath: ${{ inputs.projectfilepath }}
       stricttestfailures: ${{ inputs.stricttestfailures }}
       fmgConfigConnectionString: ${{ inputs.fmgConfigConnectionString }}
+    secrets:
+      nuget_source_url: ${{ secrets.nugetsourceurl }}
+      nuget_auth_token: ${{ secrets.nugetauthtoken }}
 
   build:
     runs-on: ubuntu-latest

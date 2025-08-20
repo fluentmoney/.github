@@ -22,7 +22,13 @@ on:
       fmgConfigConnectionString:  
         required: false
         type: string
-
+    secrets:
+      ## NuGet source URL
+      nugetsourceurl:
+        required: true
+      ## NuGet authentication token
+      nugetauthtoken:
+        required: true
 
 ## Jobs the workflow runs
 jobs:
@@ -41,8 +47,12 @@ jobs:
           dotnet-version: ${{ inputs.dotnetcoreversion }}
 
       ## Step 3: Authenticate with NuGet
-      - name: NuGet Authenticate
-        uses: nuget/setup-nuget@v2
+      - name: Authenticate with NuGet
+        uses: actions/setup-dotnet@v3
+        with:
+          source-url: ${{ secrets.nugetsourceurl }}
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.nugetauthtoken }}
 
       ## Step 4: Find the path to run tests from using a custom script
       - name: Find path to run tests from
