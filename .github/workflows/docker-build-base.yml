@@ -47,29 +47,19 @@ on:
         required: false
         type: string
 
-
-## Jobs the workflow runs
 jobs:
-  tests:
-    runs-on: ubuntu-latest
-    ## Only run tests if not forcing docker build, or if on master branch
-    steps:
-      ## Step 1: Checkout the repository code
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      ## Step 2: Run .NET unit tests using the reusable workflow
-      - name: Run Unit Tests
-        uses: ./.github/workflows/dotnet-unit-tests.yml
-        with:
-          dotnetcoreversion: ${{ inputs.dotnetcoreversion }}
-          projectfilepath: ${{ inputs.projectfilepath }}
-          stricttestfailures: ${{ inputs.stricttestfailures }}
-          fmgConfigConnectionString: ${{ inputs.fmgConfigConnectionString }}
+  ## Jobs the workflow runs
+  unit-tests:
+    uses: ./.github/workflows/dotnet-unit-tests.yml
+    with:
+      dotnetcoreversion: ${{ inputs.dotnetcoreversion }}
+      projectfilepath: ${{ inputs.projectfilepath }}
+      stricttestfailures: ${{ inputs.stricttestfailures }}
+      fmgConfigConnectionString: ${{ inputs.fmgConfigConnectionString }}
 
   build:
     runs-on: ubuntu-latest
-    needs: tests
+    needs: unit-tests
     ## Only build if forced or tests succeeded and on master branch
     if: ${{ inputs.forcedockerbuild || (success() && github.ref == 'refs/heads/master') }}
     steps:
@@ -111,7 +101,7 @@ jobs:
 
   push_git_tag:
     runs-on: ubuntu-latest
-    needs: [tests, build]
+    needs: [unit-tests, build]
     ## Only run if everything succeeded and on master branch
     if: ${{ success() && github.ref == 'refs/heads/master' }}
     steps:
