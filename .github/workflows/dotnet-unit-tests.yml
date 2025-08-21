@@ -37,27 +37,22 @@ jobs:
         uses: actions/checkout@v4
 
       ## Step 2: Setup the required .NET version
-      - name: Setup .NET Core SDK
+      - name: Setup .NET SDK and authenticate with NuGet
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ inputs.dotnetcoreversion }}
-
-      ## Step 3: Authenticate with NuGet
-      - name: Authenticate with NuGet
-        uses: actions/setup-dotnet@v3
-        with:
           source-url: https://pkgs.dev.azure.com/FluentMoneyGroup/fmg-myfluent/_packaging/fluent/nuget/v3/index.json
         env:
           NUGET_AUTH_TOKEN: ${{ secrets.nugetauthtoken }}
 
-      ## Step 4: Find the path to run tests from using a custom script
+      ## Step 3: Find the path to run tests from using a custom script
       - name: Find path to run tests from
         id: find_test_path
         run: |
           chmod +x ./Pipelines/find-test-path
           echo "testpath=$(./Pipelines/find-test-path ./${{ inputs.projectfilepath }})" >> $GITHUB_OUTPUT
 
-      ## Step 5: Run the unit tests with code coverage and output results
+      ## Step 4: Run the unit tests with code coverage and output results
       - name: Run Unit Tests
         env:
           FMG_CONFIG_CONNECTION_STRING: ${{ secrets.fmgConfigConnectionString }}
