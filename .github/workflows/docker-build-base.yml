@@ -160,8 +160,8 @@ jobs:
           echo "${{ github.run_id}}"
 
       ## Step 3: Login to Azure CLI
-      - name: Azure Login
-        uses: azure/login@v1
+      - name: Azure CLI Login
+        uses: azure/login@v2
         with:
           creds: |
             {
