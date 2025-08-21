@@ -121,31 +121,32 @@ jobs:
       - name: Add NuGet source
         run: dotnet nuget add source https://pkgs.dev.azure.com/FluentMoneyGroup/fmg-myfluent/_packaging/fluent/nuget/v3/index.json --name fluent --username anything --password ${{ secrets.nugetauthtoken }} --store-password-in-clear-text
 
-      ## Step 8: Build the Docker image
-      - name: Docker Build
-        uses: docker/build-push-action@v5
-        with:
-          context: ${{ inputs.buildcontextpath }}
-          file: ${{ inputs.dockerfilepath }}
-          push: false
-          tags: |
-            ${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest
-            latest
-          build-args: |
-            FEED_ACCESSTOKEN=${{ secrets.nugetauthtoken }}
+      ## Step 8: Restore the project dependencies
+      - name: Restore dependencies
+        run: dotnet restore ${{ inputs.buildcontextpath }}
 
-      ## Step 9: Push the Docker image to the registry
-      - name: Docker Push
+      ## Step 9: Login to Azure Container Registry
+      - name: Login to Azure Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.ACR_REGISTRY_URL }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+      
+      ## Step 10: Build the Docker image
+      - name: Build and Push Docker image
         uses: docker/build-push-action@v5
         with:
           context: ${{ inputs.buildcontextpath }}
           file: ${{ inputs.dockerfilepath }}
           push: true
           tags: |
-            ${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest
-            latest
+            ${{ secrets.ACR_REGISTRY_URL }}/${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest
+            ${{ secrets.ACR_REGISTRY_URL }}/latest
+          build-args: |
+            FEED_ACCESSTOKEN=${{ secrets.nugetauthtoken }}
 
-      ## Step 10: Tag the git commit for traceability
+      ## Step 11: Tag the git commit for traceability
       - name: Git Tag
         run: |
           git tag builds/${{ github.workflow }}/${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest
