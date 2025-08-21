@@ -106,6 +106,7 @@ jobs:
           key: build-counter-${{ steps.date.outputs.date }}-${{ steps.counter.outputs.run_num }}
           restore-keys: |
             build-counter-${{ steps.date.outputs.date }}
+          save-always: true
 
       ## Step 5: Show the generated tag for debugging
       - name: Show generated tag
