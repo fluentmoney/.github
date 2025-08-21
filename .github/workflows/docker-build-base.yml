@@ -62,27 +62,66 @@ jobs:
       nugetauthtoken: ${{ secrets.nugetauthtoken }}
       fmgConfigConnectionString: ${{ secrets.fmgConfigConnectionString }}
 
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
     needs: unit-tests
     ## Only build if forced or tests succeeded and on master branch
     if: ${{ inputs.forcedockerbuild || (success() && github.ref == 'refs/heads/main') }}
     steps:
-      ## Step 1: Checkout the repository code (with credentials)
+
+      ## Step 1: Generate a build number based on the current date
+      - name: Get date
+        id: date
+        run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+      ## Step 2: Restore the build counter from cache or initialize it
+      - name: Restore build counter
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: .build_counter
+          key: build-counter-${{ steps.date.outputs.date }}
+          restore-keys: |
+            build-counter-${{ steps.date.outputs.date }}
+
+      ## Step 3: Increment the build counter
+      - name: Increment counter
+        id: counter
+        run: |
+          if [ -f .build_counter ]; then
+            count=$(cat .build_counter)
+          else
+            count=0
+          fi
+          count=$((count + 1))
+          echo $count > .build_counter
+          echo "RUN_NUM=$count" >> $GITHUB_ENV
+          echo "run_num=$count" >> $GITHUB_OUTPUT
+
+      ## Step 4: Save the updated build counter to cache
+      - name: Save counter
+        uses: actions/cache@v4
+        with:
+          path: .build_counter
+          key: build-counter-${{ steps.date.outputs.date }}-${{ steps.counter.outputs.run_num }}
+          restore-keys: |
+            build-counter-${{ steps.date.outputs.date }}
+
+      ## Step 5: Show the generated tag for debugging
+      - name: Show generated tag
+        run: |
+          echo "Docker tag: ${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}"
+
+      ## Step 6: Checkout the repository code (with credentials)
       - uses: actions/checkout@v4
         with:
           persist-credentials: true
 
-      - name: List files in build context
-        run: |
-          echo "Build context path: ${{ inputs.buildcontextpath }}"
-          ls -la ${{ inputs.buildcontextpath }}
-
-      ## Step 2: Add the NuGet source for the project
+      ## Step 7: Add the NuGet source for the project
       - name: Add NuGet source
         run: dotnet nuget add source https://pkgs.dev.azure.com/FluentMoneyGroup/fmg-myfluent/_packaging/fluent/nuget/v3/index.json --name fluent --username anything --password ${{ secrets.nugetauthtoken }} --store-password-in-clear-text
 
-      ## Step 3: Build the Docker image
+      ## Step 8: Build the Docker image
       - name: Docker Build
         uses: docker/build-push-action@v5
         with:
@@ -90,12 +129,12 @@ jobs:
           file: ${{ inputs.dockerfilepath }}
           push: false
           tags: |
-            ${{ github.run_number }}
+            ${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest
             latest
           build-args: |
             FEED_ACCESSTOKEN=${{ secrets.nugetauthtoken }}
 
-      ## Step 3: Push the Docker image to the registry
+      ## Step 9: Push the Docker image to the registry
       - name: Docker Push
         uses: docker/build-push-action@v5
         with:
@@ -103,22 +142,66 @@ jobs:
           file: ${{ inputs.dockerfilepath }}
           push: true
           tags: |
-            ${{ github.run_number }}
+            ${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest
             latest
 
-      ## Step 4: Tag the git commit for traceability
+      ## Step 10: Tag the git commit for traceability
       - name: Git Tag
         run: |
-          git tag builds/${{ github.workflow }}/${{ github.run_number }}
-          git push origin builds/${{ github.workflow }}/${{ github.run_number }}
+          git tag builds/${{ github.workflow }}/${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest
+          git push origin builds/${{ github.workflow }}/${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest
         working-directory: ${{ github.workspace }}
 
   push_git_tag:
     runs-on: ubuntu-latest
-    needs: [unit-tests, build]
+    needs: [unit-tests, build-and-push]
     ## Only run if everything succeeded and on master branch
-    if: ${{ success() && github.ref == 'refs/heads/master' }}
+    if: ${{ success() && github.ref == 'refs/heads/main' }}
     steps:
+
+      ## Step 1: Generate a build number based on the current date
+      - name: Get date
+        id: date
+        run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+      ## Step 2: Restore the build counter from cache or initialize it
+      - name: Restore build counter
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: .build_counter
+          key: build-counter-${{ steps.date.outputs.date }}
+          restore-keys: |
+            build-counter-${{ steps.date.outputs.date }}
+
+      ## Step 3: Increment the build counter
+      - name: Increment counter
+        id: counter
+        run: |
+          if [ -f .build_counter ]; then
+            count=$(cat .build_counter)
+          else
+            count=0
+          fi
+          count=$((count + 1))
+          echo $count > .build_counter
+          echo "RUN_NUM=$count" >> $GITHUB_ENV
+          echo "run_num=$count" >> $GITHUB_OUTPUT
+
+      ## Step 4: Save the updated build counter to cache
+      - name: Save counter
+        uses: actions/cache@v4
+        with:
+          path: .build_counter
+          key: build-counter-${{ steps.date.outputs.date }}-${{ steps.counter.outputs.run_num }}
+          restore-keys: |
+            build-counter-${{ steps.date.outputs.date }}
+
+      ## Step 5: Show the generated tag for debugging
+      - name: Show generated tag
+        run: |
+          echo "Docker tag: ${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}"
+
       ## Step 1: Set a KeyVault secret with the build number for release tracking
       - name: Set KeyVault Secret
         uses: azure/CLI@v2
@@ -126,7 +209,7 @@ jobs:
           azcliversion: latest
           inlineScript: |
             echo "Container: ${{ inputs.container }}"
-            echo "Build.BuildNumber: ${{ github.run_number }}"
+            echo "Build.BuildNumber: ${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest"
             echo "Build.SourceBranch: ${{ github.ref }}"
             echo "Build.DefinitionName: ${{ github.workflow }}"
-            az keyvault secret set --vault-name ReleaseVault --name "${{ inputs.container }}" --value ${{ github.run_number }}
+            az keyvault secret set --vault-name ReleaseVault --name "${{ inputs.container }}" --value ${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest
