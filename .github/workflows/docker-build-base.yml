@@ -58,6 +58,18 @@ on:
       ## Azure Container Registry Password
       acrPassword:
         required: true
+      ## Azure client ID
+      azureclientid:
+        required: true
+      ## Azure client secret
+      azureclientsecret:
+        required: true
+      ## Azure tenant ID
+      azuretenantid:
+        required: true
+      ## Azure subscription ID
+      azuresubscriptionid:
+        required: true
 
 jobs:
   ## Jobs the workflow runs
@@ -83,44 +95,10 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
 
-      ## Step 2: Restore the build counter from cache or initialize it
-      - name: Restore build counter
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: .build_counter
-          key: build-counter-${{ steps.date.outputs.date }}
-          restore-keys: |
-            build-counter-${{ steps.date.outputs.date }}
-
-      ## Step 3: Increment the build counter
-      - name: Increment counter
-        id: counter
-        run: |
-          if [ -f .build_counter ]; then
-            count=$(cat .build_counter)
-          else
-            count=0
-          fi
-          count=$((count + 1))
-          echo $count > .build_counter
-          echo "RUN_NUM=$count" >> $GITHUB_ENV
-          echo "run_num=$count" >> $GITHUB_OUTPUT
-
-      ## Step 4: Save the updated build counter to cache
-      - name: Save counter
-        uses: actions/cache@v4
-        with:
-          path: .build_counter
-          key: build-counter-${{ steps.date.outputs.date }}-${{ steps.counter.outputs.run_num }}
-          restore-keys: |
-            build-counter-${{ steps.date.outputs.date }}
-          save-always: true
-
       ## Step 5: Show the generated tag for debugging
       - name: Show generated tag
         run: |
-          echo "Docker tag: ${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}"
+          echo "Docker tag: ${{ steps.date.outputs.date }}.${{ github.run_number }}"
 
       ## Step 6: Checkout the repository code (with credentials)
       - uses: actions/checkout@v4
@@ -175,52 +153,32 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
 
-      ## Step 2: Restore the build counter from cache or initialize it
-      - name: Restore build counter
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: .build_counter
-          key: build-counter-${{ steps.date.outputs.date }}
-          restore-keys: |
-            build-counter-${{ steps.date.outputs.date }}
-
-      ## Step 3: Increment the build counter
-      - name: Increment counter
-        id: counter
-        run: |
-          if [ -f .build_counter ]; then
-            count=$(cat .build_counter)
-          else
-            count=0
-          fi
-          count=$((count + 1))
-          echo $count > .build_counter
-          echo "RUN_NUM=$count" >> $GITHUB_ENV
-          echo "run_num=$count" >> $GITHUB_OUTPUT
-
-      ## Step 4: Save the updated build counter to cache
-      - name: Save counter
-        uses: actions/cache@v4
-        with:
-          path: .build_counter
-          key: build-counter-${{ steps.date.outputs.date }}-${{ steps.counter.outputs.run_num }}
-          restore-keys: |
-            build-counter-${{ steps.date.outputs.date }}
-
-      ## Step 5: Show the generated tag for debugging
+      ## Step 2: Show the generated tag for debugging
       - name: Show generated tag
         run: |
-          echo "Docker tag: ${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}"
+          echo "Docker tag: ${{ steps.date.outputs.date }}.${{ github.run_number }}"
+          echo "${{ github.run_id}}"
 
-      ## Step 1: Set a KeyVault secret with the build number for release tracking
+      ## Step 3: Login to Azure CLI
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.azureclientid }}",
+              "clientSecret": "${{ secrets.azureclientsecret }}",
+              "tenantId": "${{ secrets.azuretenantid }}",
+              "subscriptionId": "${{ secrets.azuresubscriptionid }}"
+            }
+
+      ## Step 4: Set a KeyVault secret with the build number for release tracking
       - name: Set KeyVault Secret
         uses: azure/CLI@v2
         with:
           azcliversion: latest
           inlineScript: |
             echo "Container: ${{ inputs.container }}"
-            echo "Build.BuildNumber: ${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest"
+            echo "Build.BuildNumber: ${{ steps.date.outputs.date }}.${{ github.run_number }}.githubtest"
             echo "Build.SourceBranch: ${{ github.ref }}"
             echo "Build.DefinitionName: ${{ github.workflow }}"
-            az keyvault secret set --vault-name ReleaseVault --name "${{ inputs.container }}" --value ${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest
+            az keyvault secret set --vault-name ReleaseVault --name "${{ inputs.container }}" --value ${{ steps.date.outputs.date }}.${{ github.run_number }}.githubtest
