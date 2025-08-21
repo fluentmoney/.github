@@ -73,6 +73,11 @@ jobs:
         with:
           persist-credentials: true
 
+      - name: List files in build context
+        run: |
+          echo "Build context path: ${{ inputs.buildcontextpath }}"
+          ls -la ${{ inputs.buildcontextpath }}
+
       ## Step 2: Build the Docker image
       - name: Docker Build
         uses: docker/build-push-action@v5
