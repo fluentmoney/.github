@@ -48,7 +48,16 @@ on:
         required: true
       ## fmgConfig connection string
       fmgConfigConnectionString:
-        required: false
+        required: true
+      ## Azure Container Registry URL
+      acrRegistryUrl:
+        required: true
+      ## Azure Container Registry Username
+      acrUsername:
+        required: true
+      ## Azure Container Registry Password
+      acrPassword:
+        required: true
 
 jobs:
   ## Jobs the workflow runs
@@ -130,9 +139,9 @@ jobs:
       - name: Login to Azure Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ${{ secrets.ACR_REGISTRY_URL }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+          registry: ${{ secrets.acrRegistryUrl }}
+          username: ${{ secrets.acrUsername }}
+          password: ${{ secrets.acrPassword }}
       
       ## Step 10: Build the Docker image
       - name: Build and Push Docker image
@@ -142,8 +151,8 @@ jobs:
           file: ${{ inputs.dockerfilepath }}
           push: true
           tags: |
-            ${{ secrets.ACR_REGISTRY_URL }}/${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest
-            ${{ secrets.ACR_REGISTRY_URL }}/latest
+            ${{ secrets.acrRegistryUrl }}/${{ steps.date.outputs.date }}.${{ steps.counter.outputs.run_num }}.githubtest
+            ${{ secrets.acrRegistryUrl }}/latest
           build-args: |
             FEED_ACCESSTOKEN=${{ secrets.nugetauthtoken }}
 
