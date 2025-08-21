@@ -129,8 +129,8 @@ jobs:
           file: ${{ inputs.dockerfilepath }}
           push: true
           tags: |
-            ${{ secrets.acrRegistryUrl }}/${{ inputs.container }}/${{ steps.date.outputs.date }}.${{ github.run_number }}.githubtest
-            ${{ secrets.acrRegistryUrl }}/${{ inputs.container }}/latest
+            ${{ secrets.acrRegistryUrl }}/${{ inputs.container }}:${{ steps.date.outputs.date }}.${{ github.run_number }}.githubtest
+            ${{ secrets.acrRegistryUrl }}/${{ inputs.container }}:latest
           build-args: |
             FEED_ACCESSTOKEN=${{ secrets.nugetauthtoken }}
 
