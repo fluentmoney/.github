@@ -78,7 +78,11 @@ jobs:
           echo "Build context path: ${{ inputs.buildcontextpath }}"
           ls -la ${{ inputs.buildcontextpath }}
 
-      ## Step 2: Build the Docker image
+      ## Step 2: Add the NuGet source for the project
+      - name: Add NuGet source
+        run: dotnet nuget add source https://pkgs.dev.azure.com/FluentMoneyGroup/fmg-myfluent/_packaging/fluent/nuget/v3/index.json --name fluent --username anything --password ${{ secrets.nugetauthtoken }} --store-password-in-clear-text
+
+      ## Step 3: Build the Docker image
       - name: Docker Build
         uses: docker/build-push-action@v5
         with:
@@ -89,7 +93,7 @@ jobs:
             ${{ github.run_number }}
             latest
           build-args: |
-            FEED_ACCESSTOKEN=${{ secrets.GITHUB_TOKEN }}
+            FEED_ACCESSTOKEN=${{ secrets.nugetauthtoken }}
 
       ## Step 3: Push the Docker image to the registry
       - name: Docker Push
