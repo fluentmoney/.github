@@ -170,6 +170,7 @@ jobs:
               "tenantId": "${{ secrets.azuretenantid }}",
               "subscriptionId": "${{ secrets.azuresubscriptionid }}"
             }
+          allow-no-subscriptions: true
 
       ## Step 4: Set a KeyVault secret with the build number for release tracking
       - name: Set KeyVault Secret
