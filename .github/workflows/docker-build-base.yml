@@ -168,7 +168,6 @@ jobs:
               "clientId": "${{ secrets.azureclientid }}",
               "clientSecret": "${{ secrets.azureclientsecret }}",
               "tenantId": "${{ secrets.azuretenantid }}",
-              "subscriptionId": "${{ secrets.azuresubscriptionid }}"
             }
           allow-no-subscriptions: true
 
