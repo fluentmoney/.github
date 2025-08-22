@@ -1,7 +1,6 @@
 ## Name of the workflow
 name: Docker Build & Push to ACR
 
-
 ## The variables needed to run the workflow
 on:
   workflow_call:
@@ -32,11 +31,6 @@ on:
         required: false
         type: string
         default: '7.0.x'
-      ## Container registry service connection
-      containerregistry:
-        required: false
-        type: string
-        default: 'service-connection-fluent-acr'
       ## Force Docker build regardless of branch
       forcedockerbuild:
         required: false
@@ -66,9 +60,6 @@ on:
         required: true
       ## Azure tenant ID
       azuretenantid:
-        required: true
-      ## Azure subscription ID
-      azuresubscriptionid:
         required: true
 
 jobs:
@@ -129,7 +120,7 @@ jobs:
           file: ${{ inputs.dockerfilepath }}
           push: true
           tags: |
-            ${{ secrets.acrRegistryUrl }}/${{ inputs.container }}:${{ steps.date.outputs.date }}.${{ github.run_number }}.githubtest
+            ${{ secrets.acrRegistryUrl }}/${{ inputs.container }}:${{ steps.date.outputs.date }}.${{ github.run_number }}
             ${{ secrets.acrRegistryUrl }}/${{ inputs.container }}:latest
           build-args: |
             FEED_ACCESSTOKEN=${{ secrets.nugetauthtoken }}
@@ -137,8 +128,8 @@ jobs:
       ## Step 11: Tag the git commit for traceability
       - name: Git Tag
         run: |
-          git tag builds/${{ inputs.container }}/${{ steps.date.outputs.date }}.${{ github.run_number }}.githubtest
-          git push origin builds/${{ inputs.container }}/${{ steps.date.outputs.date }}.${{ github.run_number }}.githubtest
+          git tag builds/${{ inputs.container }}/${{ steps.date.outputs.date }}.${{ github.run_number }}
+          git push origin builds/${{ inputs.container }}/${{ steps.date.outputs.date }}.${{ github.run_number }}
         working-directory: ${{ github.workspace }}
 
   push_git_tag:
@@ -178,7 +169,7 @@ jobs:
           azcliversion: latest
           inlineScript: |
             echo "Container: ${{ inputs.container }}"
-            echo "Build.BuildNumber: ${{ steps.date.outputs.date }}.${{ github.run_number }}.githubtest"
+            echo "Build.BuildNumber: ${{ steps.date.outputs.date }}.${{ github.run_number }}"
             echo "Build.SourceBranch: ${{ github.ref }}"
             echo "Build.DefinitionName: ${{ github.workflow }}"
-            az keyvault secret set --vault-name ReleaseVault --name "${{ inputs.container }}" --value ${{ steps.date.outputs.date }}.${{ github.run_number }}.githubtest
+            az keyvault secret set --vault-name ReleaseVault --name "${{ inputs.container }}" --value ${{ steps.date.outputs.date }}.${{ github.run_number }}

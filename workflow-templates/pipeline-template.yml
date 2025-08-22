@@ -1,41 +1,66 @@
-## Name of the action
-name: pipeline-template
+## This is a template workflow for building and pushing Docker images using GitHub Actions.
+name: <YOUR PIPELINE NAME>
 
-## Trigger conditions for the action
+## Trigger the workflow on pushes to the master branch or when manually triggered
 on:
   push:
     branches:
       - master
     paths:
-      - '{Path-to-consumer}'
-      - '{Path-to-pipeline-yml}'
+      - '<YOUR PROJECT PATH>/**'
+      - '<YOUR PROJECT PIPELINE PATH>/**'
   pull_request:
     branches:
       - master
     paths:
-      - '{Path-to-consumer}'
-      - '{Path-to-pipeline-yml}'
+      - '<YOUR PROJECT PATH>/**'
+      - '<YOUR PROJECT PIPELINE PATH>/**'
+  workflow_dispatch:
 
-## Environment variables for the action
+## Define environment variables for reuse in the workflow
 env:
-  CONTAINER: ${{ secrets.DOCKER_IMAGE_NAME }}
-  BUILD_CONTEXT_PATH: ${{ secrets.DOCKER_CONTEXT_PATH }}
-  PROJECT_FILE_PATH: ${{ secrets.PROJECT_FILE_PATH }}
-  DOCKERFILE_PATH: ${{ secrets.DOCKER_CONTEXT_PATH }}/Dockerfile
-  CONTAINER_REGISTRY: ${{ secrets.CONTAINER_REGISTRY }}
-  DOTNET_CORE_VERSION: 8.0.x
+  DOCKER_IMAGE_NAME: "<YOUR DOCKER IMAGE NAME>"
+  DOCKER_CONTEXT_PATH: "<YOUR DOCKER CONTEXT PATH>"
+  PROJECT_FILE_PATH: "<YOUR PROJECT FILE PATH>"
+  DOCKER_FILE_PATH: "<YOUR DOCKER FILE PATH>"
+  DOTNET_CORE_VERSION: "<YOUR .NET VERSION>"
+  BUILD_NUMBER: ${{ github.run_number }}
 
-## Jobs that the action runs
+## Jobs the workflow runs
 jobs:
-  build-and-test:
-    uses: ./.github/workflow-templates/docker-build-base.yml
+  ## Job to set variables
+  set-vars:
+    runs-on: ubuntu-latest
+    outputs:
+      docker_image_name: ${{ env.DOCKER_IMAGE_NAME }}
+      docker_context_path: ${{ env.DOCKER_CONTEXT_PATH }}
+      project_file_path: ${{ env.PROJECT_FILE_PATH }}
+      docker_file_path: ${{ env.DOCKER_FILE_PATH }}
+      dotnet_core_version: ${{ env.DOTNET_CORE_VERSION }}
+      fmg_config_connection_string: ${{ env.FMG_CONFIG_CONNECTION_STRING }}
+      build_number: ${{ env.BUILD_NUMBER }}
+    steps:
+      - run: echo "Variables set"
+
+  ## Job to run the Docker build and push using the reusable workflow
+  build-base:
+    needs: set-vars
+    uses: fluentmoney/.github/.github/workflows/docker-build-base.yml@main
     with:
-      container: ${{ env.CONTAINER }}
-      buildcontextpath: ${{ env.BUILD_CONTEXT_PATH }}
-      projectfilepath: ${{ env.PROJECT_FILE_PATH }}
-      dockerfilepath: ${{ env.DOCKERFILE_PATH }}
-      containerregistry: ${{ env.CONTAINER_REGISTRY }}
-      dotnetcoreversion: ${{ env.DOTNET_CORE_VERSION }}
-    ## Secrets required for the job
+      container: ${{ needs.set-vars.outputs.docker_image_name }}
+      buildcontextpath: ${{ needs.set-vars.outputs.docker_context_path }}
+      projectfilepath: ${{ needs.set-vars.outputs.project_file_path }}
+      dockerfilepath: ${{ needs.set-vars.outputs.docker_file_path }}/Dockerfile
+      stricttestfailures: false
+      dotnetcoreversion: ${{ needs.set-vars.outputs.dotnet_core_version }}
+      forcedockerbuild: false
     secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      nugetauthtoken: ${{ secrets.NUGET_AUTH_TOKEN }}
+      fmgConfigConnectionString: ${{ secrets.FMG_CONFIG_CONNECTION_STRING }}
+      acrRegistryUrl: ${{ secrets.ACR_REGISTRY_URL }}
+      acrUsername: ${{ secrets.ACR_USERNAME }}
+      acrPassword: ${{ secrets.ACR_PASSWORD }}
+      azureclientid: ${{ secrets.AZURE_CLIENT_ID }}
+      azureclientsecret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      azuretenantid: ${{ secrets.AZURE_TENANT_ID }}
+      azureSubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
