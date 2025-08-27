@@ -75,7 +75,7 @@ jobs:
       fmgConfigConnectionString: ${{ secrets.fmgConfigConnectionString }}
 
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: unit-tests
     ## Only build if forced or tests succeeded and on master branch
     if: ${{ inputs.forcedockerbuild || (success() && github.ref == 'refs/heads/main') }}
@@ -133,7 +133,7 @@ jobs:
         working-directory: ${{ github.workspace }}
 
   push_git_tag:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [unit-tests, build-and-push]
     ## Only run if everything succeeded and on master branch
     if: ${{ success() && github.ref == 'refs/heads/main' }}
