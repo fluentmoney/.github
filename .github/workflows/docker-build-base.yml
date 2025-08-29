@@ -93,15 +93,18 @@ jobs:
 
       ## Step 6: Checkout the repository code (with credentials)
       - uses: actions/checkout@v4
+        if: ${{ !contains(runner.labels, 'self-hosted') }}
         with:
           persist-credentials: true
 
       ## Step 7: Add the NuGet source for the project
       - name: Add NuGet source
+        if: ${{ !contains(runner.labels, 'self-hosted') }}
         run: dotnet nuget add source https://pkgs.dev.azure.com/FluentMoneyGroup/fmg-myfluent/_packaging/fluent/nuget/v3/index.json --name fluent --username anything --password ${{ secrets.nugetauthtoken }} --store-password-in-clear-text
 
       ## Step 8: Restore the project dependencies
       - name: Restore dependencies
+        if: ${{ !contains(runner.labels, 'self-hosted') }}
         run: dotnet restore ${{ inputs.buildcontextpath }}
 
       ## Step 9: Login to Azure Container Registry
