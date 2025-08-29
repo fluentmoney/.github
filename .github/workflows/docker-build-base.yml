@@ -76,6 +76,7 @@ jobs:
         run: dotnet nuget locals all --clear || true
 
   unit-tests:
+    needs: Cleanup
     uses: ./.github/workflows/dotnet-unit-tests.yml
     with:
       dotnetcoreversion: ${{ inputs.dotnetcoreversion }}
