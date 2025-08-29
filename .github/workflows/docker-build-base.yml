@@ -81,6 +81,9 @@ jobs:
     if: ${{ inputs.forcedockerbuild || (success() && github.ref == 'refs/heads/main') }}
     steps:
 
+      - name: Show runner labels
+        run: echo "${{ toJSON(runner.labels) }}"
+
       ## Step 1: Generate a build number based on the current date
       - name: Get date
         id: date
