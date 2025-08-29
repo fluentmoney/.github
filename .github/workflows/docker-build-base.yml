@@ -64,6 +64,17 @@ on:
 
 jobs:
   ## Jobs the workflow runs
+  Cleanup:
+    runs-on: self-hosted
+    steps:
+      ## Step 1: Cleanup the added NuGet source
+      - name: Cleanup NuGet source
+        run: dotnet nuget remove source fluent || true
+
+      ## Step 2: Dotnet restore cleanup
+      - name: Dotnet restore cleanup
+        run: dotnet nuget locals all --clear || true
+
   unit-tests:
     uses: ./.github/workflows/dotnet-unit-tests.yml
     with:
@@ -86,25 +97,25 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
 
-      ## Step 5: Show the generated tag for debugging
+      ## Step 2: Show the generated tag for debugging
       - name: Show generated tag
         run: |
           echo "Docker tag: ${{ steps.date.outputs.date }}.${{ github.run_number }}"
 
-      ## Step 6: Checkout the repository code (with credentials)
+      ## Step 3: Checkout the repository code (with credentials)
       - uses: actions/checkout@v4
         with:
           persist-credentials: true
 
-      ## Step 7: Add the NuGet source for the project
+      ## Step 4: Add the NuGet source for the project
       - name: Add NuGet source
         run: dotnet nuget add source https://pkgs.dev.azure.com/FluentMoneyGroup/fmg-myfluent/_packaging/fluent/nuget/v3/index.json --name fluent --username anything --password ${{ secrets.nugetauthtoken }} --store-password-in-clear-text
 
-      ## Step 8: Restore the project dependencies
+      ## Step 5: Restore the project dependencies
       - name: Restore dependencies
         run: dotnet restore ${{ inputs.buildcontextpath }}
 
-      ## Step 9: Login to Azure Container Registry
+      ## Step 6: Login to Azure Container Registry
       - name: Login to Azure Container Registry
         uses: docker/login-action@v2
         with:
@@ -112,7 +123,7 @@ jobs:
           username: ${{ secrets.acrUsername }}
           password: ${{ secrets.acrPassword }}
       
-      ## Step 10: Build the Docker image
+      ## Step 7: Build the Docker image
       - name: Build and Push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -125,18 +136,18 @@ jobs:
           build-args: |
             FEED_ACCESSTOKEN=${{ secrets.nugetauthtoken }}
 
-      ## Step 11: Tag the git commit for traceability
+      ## Step 8: Tag the git commit for traceability
       - name: Git Tag
         run: |
           git tag builds/${{ inputs.container }}/${{ steps.date.outputs.date }}.${{ github.run_number }}
           git push origin builds/${{ inputs.container }}/${{ steps.date.outputs.date }}.${{ github.run_number }}
         working-directory: ${{ github.workspace }}
 
-      ## Step 12: Cleanup the added NuGet source
+      ## Step 9: Cleanup the added NuGet source
       - name: Cleanup NuGet source
         run: dotnet nuget remove source fluent || true
 
-      ## Step 13: Dotnet restore cleanup
+      ## Step 10: Dotnet restore cleanup
       - name: Dotnet restore cleanup
         run: dotnet nuget locals all --clear || true 
 
