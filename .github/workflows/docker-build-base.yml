@@ -81,9 +81,6 @@ jobs:
     if: ${{ inputs.forcedockerbuild || (success() && github.ref == 'refs/heads/main') }}
     steps:
 
-      - name: Show runner labels
-        run: echo "${{ toJSON(runner.labels) }}"
-
       ## Step 1: Generate a build number based on the current date
       - name: Get date
         id: date
@@ -96,18 +93,15 @@ jobs:
 
       ## Step 6: Checkout the repository code (with credentials)
       - uses: actions/checkout@v4
-        if: ${{ !contains(runner.labels, 'self-hosted') }}
         with:
           persist-credentials: true
 
       ## Step 7: Add the NuGet source for the project
       - name: Add NuGet source
-        if: ${{ !contains(runner.labels, 'self-hosted') }}
         run: dotnet nuget add source https://pkgs.dev.azure.com/FluentMoneyGroup/fmg-myfluent/_packaging/fluent/nuget/v3/index.json --name fluent --username anything --password ${{ secrets.nugetauthtoken }} --store-password-in-clear-text
 
       ## Step 8: Restore the project dependencies
       - name: Restore dependencies
-        if: ${{ !contains(runner.labels, 'self-hosted') }}
         run: dotnet restore ${{ inputs.buildcontextpath }}
 
       ## Step 9: Login to Azure Container Registry
@@ -137,6 +131,14 @@ jobs:
           git tag builds/${{ inputs.container }}/${{ steps.date.outputs.date }}.${{ github.run_number }}
           git push origin builds/${{ inputs.container }}/${{ steps.date.outputs.date }}.${{ github.run_number }}
         working-directory: ${{ github.workspace }}
+
+      ## Step 12: Cleanup the added NuGet source
+      - name: Cleanup NuGet source
+        run: dotnet nuget remove source fluent || true
+
+      ## Step 13: Dotnet restore cleanup
+      - name: Dotnet restore cleanup
+        run: dotnet nuget locals all --clear || true 
 
   push_git_tag:
     runs-on: self-hosted

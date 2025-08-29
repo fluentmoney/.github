@@ -64,3 +64,11 @@ jobs:
         run: |
           dotnet test "${{ steps.find_test_path.outputs.testpath }}" --logger:trx --collect:"XPlat Code Coverage" --results-directory:"TestResults"
         continue-on-error: ${{ !inputs.stricttestfailures }}
+
+      ## Step 5: Cleanup the added NuGet source
+      - name: Cleanup NuGet source
+        run: dotnet nuget remove source fluent || true
+
+      ## Step 6: Dotnet restore cleanup
+      - name: Dotnet restore cleanup
+        run: dotnet nuget locals all --clear || true 
