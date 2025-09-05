@@ -30,7 +30,7 @@ on:
 jobs:
   unit_tests:
     ## What OS to run the job on
-    runs-on: self-hosted 
+    runs-on: ubuntu-latest 
     steps:
       ## Step 1: Checkout the repository code
       - name: Checkout repository
